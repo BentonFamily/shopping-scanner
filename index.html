@@ -80,21 +80,35 @@
     }
 
 	async function lookupBarcode(barcode) {
-  	const url = `${API_URL}?action=lookup&barcode=${encodeURIComponent(barcode)}`;
+  try {
+    const url = `${API_URL}?action=lookup&barcode=${encodeURIComponent(barcode)}`;
 
-  	const response = await fetch(url);
-  	const data = await response.json();
+    document.getElementById('result').innerHTML =
+      `Scanned barcode: ${barcode}<br>Calling API...`;
 
-  	console.log(data);
+    const response = await fetch(url);
 
-  	if (data.ok && data.product) {
-    	document.getElementById('result').innerHTML =
-      		`✅ ${data.product.productName}<br><small>${data.product.brand || ''}</small>`;
-  	} else {
-    	document.getElementById('result').innerHTML =
-      		`❌ Unknown barcode: ${barcode}`;
-  	}
-      }
+    document.getElementById('result').innerHTML =
+      `Scanned barcode: ${barcode}<br>API responded. Reading data...`;
+
+    const data = await response.json();
+
+    console.log('Lookup response:', data);
+
+    if (data.ok && data.product) {
+      document.getElementById('result').innerHTML =
+        `✅ ${data.product.productName}<br><small>${data.product.brand || ''}</small>`;
+    } else {
+      document.getElementById('result').innerHTML =
+        `❌ Unknown barcode: ${barcode}`;
+    }
+  } catch (error) {
+    console.error('Lookup failed:', error);
+
+    document.getElementById('result').innerHTML =
+      `❌ Lookup failed<br><small>${error.message}</small>`;
+  }
+}
   </script>
 
 </body>
