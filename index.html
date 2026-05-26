@@ -79,35 +79,42 @@
       );
     }
 
-	async function lookupBarcode(barcode) {
-  try {
-    const url = `${API_URL}?action=lookup&barcode=${encodeURIComponent(barcode)}`;
+	function lookupBarcode(barcode) {
+  return new Promise((resolve, reject) => {
+    const callbackName = `barcodeLookup_${Date.now()}`;
 
-    document.getElementById('result').innerHTML =
-      `Scanned barcode: ${barcode}<br>Calling API...`;
+    window[callbackName] = function(data) {
+      delete window[callbackName];
+      script.remove();
 
-    const response = await fetch(url);
+      console.log('Lookup response:', data);
 
-    document.getElementById('result').innerHTML =
-      `Scanned barcode: ${barcode}<br>API responded. Reading data...`;
+      if (data.ok && data.product) {
+        document.getElementById('result').innerHTML =
+          `✅ ${data.product.productName}<br><small>${data.product.brand || ''}</small>`;
+      } else {
+        document.getElementById('result').innerHTML =
+          `❌ Unknown barcode: ${barcode}`;
+      }
 
-    const data = await response.json();
+      resolve(data);
+    };
 
-    console.log('Lookup response:', data);
+    const script = document.createElement('script');
+    script.src = `${API_URL}?action=lookup&barcode=${encodeURIComponent(barcode)}&callback=${callbackName}`;
 
-    if (data.ok && data.product) {
+    script.onerror = function() {
+      delete window[callbackName];
+      script.remove();
+
       document.getElementById('result').innerHTML =
-        `✅ ${data.product.productName}<br><small>${data.product.brand || ''}</small>`;
-    } else {
-      document.getElementById('result').innerHTML =
-        `❌ Unknown barcode: ${barcode}`;
-    }
-  } catch (error) {
-    console.error('Lookup failed:', error);
+        `❌ Lookup failed<br><small>JSONP request failed</small>`;
 
-    document.getElementById('result').innerHTML =
-      `❌ Lookup failed<br><small>${error.message}</small>`;
-  }
+      reject(new Error('JSONP request failed'));
+    };
+
+    document.body.appendChild(script);
+  });
 }
   </script>
 
