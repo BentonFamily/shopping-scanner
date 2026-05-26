@@ -1,2 +1,2 @@
 # shopping-scanner
-Shopping scanner with inventory management and potential menu suggestions
+Personal shopping scanner with inventory tracking and meal planning support
