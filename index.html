@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Shopping Scanner</title>
+
+  <script src="https://unpkg.com/@zxing/browser@latest"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+
+    button {
+      padding: 12px 16px;
+      background: orange;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    video {
+      width: 100%;
+      max-width: 500px;
+      margin-top: 20px;
+      border-radius: 12px;
+      background: black;
+    }
+
+    #result {
+      margin-top: 20px;
+      font-size: 1.2rem;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Shopping Scanner</h1>
+
+  <button onclick="startScanner()">Start Scanner</button>
+
+  <video id="preview"></video>
+
+  <div id="result">No barcode scanned yet.</div>
+
+  <script>
+    const API_URL = 'https://script.google.com/macros/s/AKfycbzADAlLhcVJuBhXz1HFeKiH-H8xlTrjDKFpFuMB86Z9GijwomaDCpaRnrx6absqwnhzIA/exec';
+
+    let codeReader;
+    let controls;
+
+    async function startScanner() {
+      document.getElementById('result').innerHTML = 'Starting camera...';
+      codeReader = new ZXingBrowser.BrowserMultiFormatReader();
+
+      const videoElement = document.getElementById('preview');
+
+      controls = await codeReader.decodeFromVideoDevice(
+        null,
+        videoElement,
+        async (result, err) => {
+
+          if (result) {
+            console.log('Barcode detected:', result.getText());
+            const barcode = result.getText();
+
+            document.getElementById('result').innerHTML =
+              `Scanned barcode: ${barcode}`;
+
+            lookupBarcode(barcode);
+          }
+        }
+      );
+    }
+
+    async function lookupBarcode(barcode) {
+
+      const url =
+        `${API_URL}?action=lookup&barcode=${barcode}`;
+
+      const response = await fetch(url);
+
+      const data = await response.json();
+
+      console.log(data);
+
+      if (data.ok) {
+        document.getElementById('result').innerHTML =
+          `✅ ${data.product.productName}`;
+      } else {
+        document.getElementById('result').innerHTML =
+          `❌ Unknown barcode: ${barcode}`;
+      }
+    }
+  </script>
+
+</body>
+</html>
